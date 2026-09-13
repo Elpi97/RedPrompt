@@ -3,3 +3,4 @@
 __pycache__/
 *.py[cod]
 ai_pentest_matrix_*.csv
+ai_pentest_full_*.json

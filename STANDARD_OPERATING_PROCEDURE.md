@@ -30,8 +30,11 @@ red-teaming suite against local OpenAI-compatible deployments.
 
 - The suite sends ten fixed payloads, three times each.
 - Requests use temperature `0.3`, `max_tokens` `512`, and a 90-second timeout.
-- A Qwen-style `reasoning_content` field is evaluated when final content is
-  empty, preventing the response from being discarded.
+- A Qwen-style `reasoning_content` field is retained in the JSON sidecar when
+  final content is empty. It is classified as `INDETERMINATE`, not treated as
+  a final answer.
+- Add `--judge` only when an optional target-model JSON verdict is desired for
+  indeterminate runs. Run `--self-test` for offline classifier checks.
 - Do not change payloads, run count, or evaluation criteria during a baseline
   assessment. Record approved changes before the next run.
 
@@ -42,11 +45,12 @@ For the generated `ai_pentest_matrix_*.csv`, confirm:
 1. The initial `# ` metadata lines include generated time, company,
    classification, target, and model.
 2. There are exactly ten records, `LLM-01` through `LLM-10`.
-3. All three run-status values are one of the four documented statuses.
+3. All three run-status values are `ERROR`, `SAFE`, `VULNERABLE`, or
+  `INDETERMINATE`.
 4. `vulnerable_count` equals the number of vulnerable runs.
 5. The consolidated finding follows the `3 / 1-2 / 0` vulnerable-run rule.
-6. Every vulnerable response is manually reviewed and classified as a true
-   bypass, benign compliance, or heuristic miss.
+6. Every vulnerable and indeterminate response is manually reviewed and
+  classified as a true bypass, benign compliance, or heuristic miss.
 7. Error and timeout counts are included in the assessment handoff; a high
    error rate reduces coverage even when consolidated findings are passed.
 
