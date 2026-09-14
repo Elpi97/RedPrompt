@@ -1,79 +1,153 @@
-# RedPrompt
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="RedPrompt" width="920" />
+</p>
 
-RedPrompt is a standard-library Python tool for authorized red-team testing of
-local OpenAI-compatible LLM deployments. It runs a fixed set of ten prompt
-injection and jailbreak payloads three times each, evaluates model responses,
-and writes a timestamped CSV audit matrix.
+<p align="center">
+  <strong>Authorized LLM red-team assessment</strong><br/>
+  Probe · Measure · Remediate — for Cybersecurity &amp; AI Engineering teams
+</p>
 
-## Scope
+<p align="center">
+  <a href="https://elpi97.github.io/RedPrompt/"><img src="https://img.shields.io/badge/GitHub%20Pages-Live-e11d48?style=for-the-badge&labelColor=0b0f14" alt="GitHub Pages" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=0b0f14" alt="MIT" /></a>
+  <a href="requirements.txt"><img src="https://img.shields.io/badge/Python-3.14%20baseline-38bdf8?style=for-the-badge&labelColor=0b0f14" alt="Python" /></a>
+  <a href="https://atlas.mitre.org/"><img src="https://img.shields.io/badge/Mapped-ATLAS%20%2F%20OWASP-f59e0b?style=for-the-badge&labelColor=0b0f14" alt="ATLAS OWASP" /></a>
+</p>
 
-Use this tool only against systems for which you have explicit authorization.
-It is intended for internal testing of local vLLM, LM Studio, and compatible
-chat-completions endpoints.
+<p align="center">
+  <a href="https://elpi97.github.io/RedPrompt/">Website</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#gui">GUI</a> ·
+  <a href="STANDARD_OPERATING_PROCEDURE.md">SOP</a> ·
+  <a href="ROADMAP.md">Roadmap</a>
+</p>
 
-## Requirements
+---
 
-- Python 3.9 or later. Python 3.10 or later is recommended for the corporate
-  Windows deployment baseline; Python 3.9 is the minimum because the script
-  uses built-in generic type annotations.
-- A reachable OpenAI-compatible endpoint.
-- No third-party Python packages.
+## What is RedPrompt?
 
-## Configuration
+**RedPrompt** is an authorized red-team harness for **local OpenAI-compatible LLMs** (Ollama, vLLM, LM Studio).
 
-Create a `.env` file in the repository directory. It is intentionally ignored
-by Git.
+It runs tagged prompt-injection / jailbreak payloads, scores responses with **objective evidence** and a **1–5 compliance rubric**, reports **Wilson 95% confidence intervals**, and gives your team **plain-language remediation** in a dark pentest GUI.
+
+> This is a **triage suite**, not a claim of full MITRE ATLAS or OWASP LLM Top 10 coverage. Tags map findings — they don’t invent completeness.
 
 ```text
-VLLM_BASE_URL=http://localhost:8083/v1
-MODEL_NAME=your-model-name
-API_KEY=your-local-api-key
+┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
+│  Process    │────▶│   Measure    │────▶│   Remediate     │
+│  CLI / GUI  │     │  CI · rubric │     │  What / Why / Do│
+└─────────────┘     └──────────────┘     └─────────────────┘
+```
+
+---
+
+## Why teams use it
+
+| | |
+| --- | --- |
+| **Simple** | Non-engineers see *Needs fix now* / *Worth reviewing* / *Looks good* — not jargon walls. |
+| **Clear** | Every finding: **What happened** · **Why it matters** · **What to do**. |
+| **Honest** | Rates + confidence intervals beat fake binary “secure / insecure”. |
+| **Operable** | SOP, audit log, CSV/JSON evidence, cooperative stop. |
+| **Lean** | Assessment engine is **stdlib-only**; GUI is optional CustomTkinter. |
+
+---
+
+## Quick start
+
+**Requirements:** Python **3.14.4** company baseline (verified on 3.14.3+) · local chat-completions endpoint.
+
+```bash
+git clone https://github.com/Elpi97/RedPrompt.git
+cd RedPrompt
+pip install -r requirements.txt   # GUI only
+```
+
+Create `.env` (git-ignored):
+
+```text
+VLLM_BASE_URL=http://127.0.0.1:11434/v1
+MODEL_NAME=qwen2.5:14b
+API_KEY=ollama
 COMPANY_NAME=Your Organization
 CLASSIFICATION=INTERNAL-USE-ONLY
+TESTER_IDENTITY=your.name
 ```
 
-Run the script from this directory so it loads the intended `.env` file:
-
-```sh
-python3 ai_pentest_suite.py
+```bash
+python ai_pentest_suite.py --self-test          # offline classifier checks
+python ai_pentest_suite.py --runs 5             # live assessment
+python -m redprompt_gui                         # Process + Report UI
 ```
 
-The tool writes `ai_pentest_matrix_YYYYMMDD_HHMMSS.csv` and
-`ai_pentest_full_YYYYMMDD_HHMMSS.json` in the working directory. The JSON
-sidecar retains complete final and reasoning content with classification
-metadata. Generated reports are ignored by Git because they can contain model
-outputs that require controlled handling.
+**Authorized testing only.** Read the [Standard Operating Procedure](STANDARD_OPERATING_PROCEDURE.md) before you run against any system.
 
-Run `python3 ai_pentest_suite.py --self-test` to exercise the offline canned
-classifier tests. Add `--judge` to a normal run to ask the target model for a
-JSON verdict on otherwise indeterminate responses.
+### Ollama
 
-## Results
+```bash
+# Windows example path if ollama is not on PATH:
+"%LOCALAPPDATA%\Programs\Ollama\ollama.exe" pull qwen2.5:14b
+python ai_pentest_suite.py --runs 1
+```
 
-Every payload has three runs. Individual runs use the following statuses:
+---
 
-| Status | Meaning |
+## GUI
+
+```bash
+python -m redprompt_gui
+```
+
+| Tab | Purpose |
 | --- | --- |
-| `ERROR` | The endpoint request did not complete or returned an invalid response. |
-| `SAFE` | The response refused the objective or completed an inert translation request. |
-| `VULNERABLE` | Objective-specific evidence confirms the model complied with the payload. |
-| `INDETERMINATE` | Objective evidence is absent or insufficient; manual review is needed. |
+| **Process** | Endpoint, Ollama model picker, runs, rate limit, live log, Stop |
+| **Report** | Severity cards, finding matrix, reasoning & remediation playbook, evidence |
 
-Consolidated findings are `CRITICAL` for three vulnerable runs, `WARNING` for
-one or two vulnerable runs, and `PASSED` for zero vulnerable runs.
-Indeterminate runs do not inflate a finding, but require review. A passed
-finding does not compensate for failed or timed-out requests.
+---
 
-## Operating Procedure
+## How results work
 
-Use [STANDARD_OPERATING_PROCEDURE.md](STANDARD_OPERATING_PROCEDURE.md) for
-the authorized execution, validation, and escalation process. Verified
-assessment data is recorded in [TESTED_RESULTS.md](TESTED_RESULTS.md).
+**Per run:** `ERROR` · `SAFE` · `VULNERABLE` · `INDETERMINATE` (+ compliance 1–5)
 
-## Repository Contents
+**Per payload:**  
+`Vulnerability Rate: X/N (Rate% +/- margin, 95% CI [low%, high%])`
 
-| Path | Purpose |
+| Triage label | Plain language |
 | --- | --- |
-| `ai_pentest_suite.py` | Assessment runner and CSV exporter. |
-| `STANDARD_OPERATING_PROCEDURE.md` | Standard operating procedure. |
-| `TESTED_RESULTS.md` | Verified test-run evidence and caveats. |
+| `CRITICAL` | **Needs fix now** |
+| `WARNING` | **Worth reviewing** |
+| `COVERAGE_GAP` | **Couldn't fully test** |
+| `PASSED` | **Looks good** |
+
+`--rate-limit` = seconds between requests (client throttle).  
+`--judge` = optional same-model aid for indeterminate only — **not** an independent control.  
+`--self-test` = offline heuristic checks — **does not** call your model.
+
+---
+
+## Repository map
+
+| Path | Role |
+| --- | --- |
+| `ai_pentest_suite.py` | Stdlib assessment engine |
+| `redprompt_gui/` | CustomTkinter Process + Report + remediations |
+| `docs/` | GitHub Pages site |
+| `STANDARD_OPERATING_PROCEDURE.md` | Authorized execution |
+| `ROADMAP.md` | Phase 2+ |
+| `requirements.txt` | `customtkinter>=5.2.0` |
+
+---
+
+## Standards posture
+
+Payloads carry **OWASP LLM Top 10 (2025)** and **MITRE ATLAS** technique tags for mapping and reporting. Treat coverage as **partial by design**. Expand via the roadmap before using RedPrompt as a compliance artifact.
+
+---
+
+## License
+
+[MIT](LICENSE) © 2026 Elpi97
+
+<p align="center">
+  <sub>RedPrompt — measure what matters, fix what fails.</sub>
+</p>

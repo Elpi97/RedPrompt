@@ -1,0 +1,3 @@
+# GUI dependency only — assessment engine (ai_pentest_suite.py) stays stdlib.
+# Company baseline: Python 3.14.4 (verified on 3.14.3+).
+customtkinter>=5.2.0

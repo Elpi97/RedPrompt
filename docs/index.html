@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RedPrompt — Authorized LLM Red-Team Assessment</title>
+  <meta name="description" content="RedPrompt: authorized prompt-injection and jailbreak triage for local OpenAI-compatible LLMs. Stdlib engine, pentest GUI, Wilson CIs, plain-language remediation." />
+  <meta property="og:title" content="RedPrompt" />
+  <meta property="og:description" content="Authorized LLM red-team assessment. Process. Measure. Remediate." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070a0e;
+      --bg-2: #0e141c;
+      --panel: #121a24;
+      --border: #243041;
+      --text: #e8eef5;
+      --muted: #8fa0b5;
+      --red: #e11d48;
+      --red-deep: #9f1239;
+      --amber: #f59e0b;
+      --ok: #22c55e;
+      --cyan: #38bdf8;
+      --font-display: "Syne", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-mono);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.55;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Atmosphere — not flat */
+    .atmosphere {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% -10%, rgba(225, 29, 72, 0.22), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 30%, rgba(245, 158, 11, 0.08), transparent 50%),
+        linear-gradient(180deg, #070a0e 0%, #0b1018 45%, #070a0e 100%);
+    }
+    .grid-scan {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.14;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(180deg, #000 0%, transparent 75%);
+      animation: drift 28s linear infinite;
+    }
+    @keyframes drift {
+      from { background-position: 0 0; }
+      to { background-position: 48px 48px; }
+    }
+
+    .wrap { width: min(1100px, calc(100% - 2.5rem)); margin: 0 auto; }
+
+    /* Nav */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid transparent;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+      color: var(--red);
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 1.25rem; align-items: center; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      border: 1px solid var(--red);
+      color: var(--text) !important;
+      padding: 0.45rem 0.85rem;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .nav-cta:hover { background: rgba(225, 29, 72, 0.15); }
+
+    /* Hero — one composition, brand first */
+    .hero {
+      min-height: calc(100vh - 5rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 0 4rem;
+      position: relative;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 8% -20% auto;
+      height: 55%;
+      background: linear-gradient(105deg, transparent 20%, rgba(225, 29, 72, 0.06) 45%, transparent 70%);
+      pointer-events: none;
+      animation: sweep 9s ease-in-out infinite alternate;
+    }
+    @keyframes sweep {
+      from { transform: translateX(-4%); opacity: 0.5; }
+      to { transform: translateX(6%); opacity: 1; }
+    }
+    .brand-hero {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(3.4rem, 11vw, 7rem);
+      letter-spacing: -0.05em;
+      line-height: 0.92;
+      color: var(--text);
+      margin-bottom: 1.25rem;
+      animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .brand-hero span { color: var(--red); }
+    .headline {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.15rem, 2.4vw, 1.65rem);
+      letter-spacing: -0.02em;
+      max-width: 28ch;
+      margin-bottom: 0.85rem;
+      animation: rise 0.9s 0.08s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .lede {
+      color: var(--muted);
+      max-width: 42ch;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+      animation: rise 0.9s 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      animation: rise 0.9s 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 0.85rem 1.2rem;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: var(--red);
+      border-color: var(--red);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--red-deep); border-color: var(--red-deep); }
+    .btn-ghost { color: var(--text); background: transparent; }
+    .btn-ghost:hover { border-color: var(--amber); color: var(--amber); }
+
+    .hero-visual {
+      margin-top: 3.5rem;
+      border: 1px solid var(--border);
+      background: linear-gradient(160deg, var(--bg-2), var(--panel));
+      position: relative;
+      overflow: hidden;
+      min-height: 220px;
+      animation: rise 1s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .hero-visual::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--red), var(--amber), transparent);
+      animation: scanline 3.5s ease-in-out infinite;
+    }
+    @keyframes scanline {
+      0%, 100% { opacity: 0.35; transform: scaleX(0.4); }
+      50% { opacity: 1; transform: scaleX(1); }
+    }
+    .terminal {
+      padding: 1.25rem 1.4rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .terminal .ok { color: var(--ok); }
+    .terminal .warn { color: var(--amber); }
+    .terminal .crit { color: var(--red); }
+    .terminal .cmd { color: var(--cyan); }
+
+    /* Sections — one job each */
+    section { padding: 4.5rem 0; border-top: 1px solid var(--border); }
+    .sec-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      letter-spacing: -0.03em;
+      margin-bottom: 0.6rem;
+    }
+    .sec-lede { color: var(--muted); max-width: 48ch; margin-bottom: 2rem; font-size: 0.9rem; }
+
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 800px) {
+      .pillars { grid-template-columns: 1fr; }
+      .nav-links a:not(.nav-cta) { display: none; }
+    }
+    .pillar {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 1.4rem 1.25rem;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .pillar:hover { border-color: var(--red); transform: translateY(-3px); }
+    .pillar h3 {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
+      color: var(--amber);
+    }
+    .pillar p { color: var(--muted); font-size: 0.82rem; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      counter-reset: step;
+    }
+    @media (max-width: 900px) { .flow { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px) { .flow { grid-template-columns: 1fr; } }
+    .step {
+      border-left: 2px solid var(--red);
+      background: var(--bg-2);
+      padding: 1.1rem 1rem;
+      counter-increment: step;
+    }
+    .step::before {
+      content: "0" counter(step);
+      display: block;
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--red);
+      font-size: 0.95rem;
+      margin-bottom: 0.35rem;
+    }
+    .step strong { display: block; margin-bottom: 0.35rem; font-size: 0.88rem; }
+    .step span { color: var(--muted); font-size: 0.78rem; }
+
+    .install {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 1.25rem 1.4rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      color: var(--cyan);
+      white-space: pre;
+    }
+
+    footer {
+      padding: 2.5rem 0 3rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    footer a { color: var(--amber); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="grid-scan" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#">RedPrompt</a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#why">Why</a>
+        <a href="#flow">Flow</a>
+        <a href="#start">Start</a>
+        <a class="nav-cta" href="https://github.com/Elpi97/RedPrompt">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-label="Hero">
+        <h1 class="brand-hero">Red<span>Prompt</span></h1>
+        <p class="headline">Authorized LLM red-team assessment.</p>
+        <p class="lede">
+          Probe local models for prompt injection and jailbreaks — measure with confidence intervals,
+          then remediate in plain language.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/Elpi97/RedPrompt">View on GitHub</a>
+          <a class="btn btn-ghost" href="#start">Quick start</a>
+        </div>
+        <div class="hero-visual" role="img" aria-label="Sample assessment output">
+          <div class="terminal">
+            <div><span class="cmd">$</span> python -m redprompt_gui</div>
+            <div>&nbsp;</div>
+            <div>[LLM-04] System Prompt Extraction · <span class="ok">Looks good</span></div>
+            <div>[LLM-01] Prompt Injection · <span class="warn">Worth reviewing</span></div>
+            <div>[LLM-07] Role Assumption · <span class="ok">Looks good</span></div>
+            <div>&nbsp;</div>
+            <div>Vulnerability Rate: 1/5 (20.0% +/- …, 95% CI) · remediation ready</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="why">
+        <h2 class="sec-title">Built for security &amp; AI teams</h2>
+        <p class="sec-lede">One composition of process, evidence, and fix steps — not another opaque scanner dump.</p>
+        <div class="pillars">
+          <article class="pillar">
+            <h3>Process</h3>
+            <p>Point at Ollama, vLLM, or LM Studio. Run tagged payloads with live logs and cooperative stop.</p>
+          </article>
+          <article class="pillar">
+            <h3>Measure</h3>
+            <p>Objective scoring, 1–5 compliance, Wilson 95% intervals — triage labels that don’t fake certainty.</p>
+          </article>
+          <article class="pillar">
+            <h3>Remediate</h3>
+            <p>What happened · Why it matters · What to do — written for the whole department, not just engineers.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="flow">
+        <h2 class="sec-title">From authorize to fix</h2>
+        <p class="sec-lede">Authorized testing only. Follow the SOP before you aim this at anything.</p>
+        <div class="flow">
+          <div class="step"><strong>Authorize</strong><span>Owner approval · in-scope endpoint · classification tags.</span></div>
+          <div class="step"><strong>Assess</strong><span>CLI or GUI · configurable runs · audit trail.</span></div>
+          <div class="step"><strong>Review</strong><span>CI rates · human disposition · evidence excerpts.</span></div>
+          <div class="step"><strong>Harden</strong><span>Playbook remediations · re-test until Passed.</span></div>
+        </div>
+      </section>
+
+      <section id="start">
+        <h2 class="sec-title">Start in minutes</h2>
+        <p class="sec-lede">Python 3.14 company baseline. Engine stays stdlib; GUI needs CustomTkinter.</p>
+        <pre class="install">git clone https://github.com/Elpi97/RedPrompt.git
+cd RedPrompt
+pip install -r requirements.txt
+# configure .env → VLLM_BASE_URL / MODEL_NAME
+python -m redprompt_gui</pre>
+      </section>
+    </main>
+
+    <footer>
+      <div>© 2026 Elpi97 · MIT License · Authorized testing only</div>
+      <div>
+        <a href="https://github.com/Elpi97/RedPrompt">Repository</a>
+        ·
+        <a href="https://github.com/Elpi97/RedPrompt/blob/main/STANDARD_OPERATING_PROCEDURE.md">SOP</a>
+        ·
+        <a href="https://atlas.mitre.org/">MITRE ATLAS</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
