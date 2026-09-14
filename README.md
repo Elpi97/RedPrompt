@@ -8,14 +8,14 @@
 </p>
 
 <p align="center">
-  <a href="https://elpi97.github.io/RedPrompt/"><img src="https://img.shields.io/badge/GitHub%20Pages-Live-e11d48?style=for-the-badge&labelColor=0b0f14" alt="GitHub Pages" /></a>
+  <a href="docs/index.html"><img src="https://img.shields.io/badge/Site-docs%2Findex.html-e11d48?style=for-the-badge&labelColor=0b0f14" alt="Site" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=0b0f14" alt="MIT" /></a>
   <a href="requirements.txt"><img src="https://img.shields.io/badge/Python-3.14%20baseline-38bdf8?style=for-the-badge&labelColor=0b0f14" alt="Python" /></a>
   <a href="https://atlas.mitre.org/"><img src="https://img.shields.io/badge/Mapped-ATLAS%20%2F%20OWASP-f59e0b?style=for-the-badge&labelColor=0b0f14" alt="ATLAS OWASP" /></a>
 </p>
 
 <p align="center">
-  <a href="https://elpi97.github.io/RedPrompt/">Website</a> ·
+  <a href="docs/index.html">Website (docs/)</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#gui">GUI</a> ·
   <a href="STANDARD_OPERATING_PROCEDURE.md">SOP</a> ·
