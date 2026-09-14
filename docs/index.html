@@ -8,6 +8,10 @@
   <meta property="og:title" content="RedPrompt" />
   <meta property="og:description" content="Authorized LLM red-team assessment. Process. Measure. Remediate." />
   <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://elpi97.github.io/RedPrompt/assets/social.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
@@ -83,7 +87,11 @@
       letter-spacing: -0.03em;
       color: var(--red);
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
     }
+    .brand img { width: 32px; height: 32px; display: block; }
     .nav-links { display: flex; gap: 1.25rem; align-items: center; }
     .nav-links a {
       color: var(--muted);
@@ -303,7 +311,7 @@
 
   <div class="wrap">
     <header>
-      <a class="brand" href="#">RedPrompt</a>
+      <a class="brand" href="#"><img src="assets/logo.svg" alt="" width="32" height="32" /> RedPrompt</a>
       <nav class="nav-links" aria-label="Primary">
         <a href="#why">Why</a>
         <a href="#flow">Flow</a>
@@ -314,7 +322,7 @@
 
     <main>
       <section class="hero" aria-label="Hero">
-        <h1 class="brand-hero">Red<span>Prompt</span></h1>
+        <h1 class="brand-hero"><img src="assets/logo.svg" alt="" width="72" height="72" style="vertical-align:middle;margin-right:0.35em;border-radius:16px" />Red<span>Prompt</span></h1>
         <p class="headline">Authorized LLM red-team assessment.</p>
         <p class="lede">
           Probe local models for prompt injection and jailbreaks — measure with confidence intervals,
